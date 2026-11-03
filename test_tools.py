@@ -21,3 +21,4 @@ pprint(consultar_pedido(8, email_certo))
 
 print("\n=== 5) Pedido 8 com e-mail errado ===")
 pprint(consultar_pedido(8, "outra.pessoa@jmail.com"))
+

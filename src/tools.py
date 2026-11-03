@@ -7,6 +7,7 @@ PRODUTOS = load_products()
 PEDIDOS = load_orders()
 
 MAX_RESULTADOS = 8  
+CHAMADAS = []
 
 
 def _normalizar(texto) -> str:
@@ -61,6 +62,18 @@ def buscar_produtos(
     Returns:
         Dicionário com a lista de produtos encontrados e seus dados.
     """
+
+    (
+        (
+            "buscar_produtos",
+            {
+                "nome": nome,
+                "categoria": categoria,
+                "preco_maCHAMADAS.appendximo": preco_maximo,
+                "apenas_disponiveis": apenas_disponiveis,
+            },
+        )
+    )
     
     mascara = pd.Series(True, index=PRODUTOS.index)
 
@@ -124,11 +137,29 @@ def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
 
     Args:
         numero_pedido: Número do pedido informado pelo cliente.
-        email_cliente: E-mail cadastrado do cliente, usado para confirmar a identidade.
-
+               email_cliente: E-mail cadastrado do cliente, usado para confirmar a identidade.
+            Use SOMENTE o e-mail que o cliente escreveu na conversa. Nunca invente,
+            suponha ou deduza um e-mail.
     Returns:
         Dicionário com os dados do pedido, ou uma mensagem de erro se os dados não conferirem.
     """
+    
+    CHAMADAS.append(
+        (
+            "consultar_pedido",
+            {
+                "numero_pedido": numero_pedido,
+                "email_informado": bool(email_cliente and email_cliente.strip()),
+            },
+        )
+    )
+
+    if not email_cliente or not email_cliente.strip():
+        return {
+            "erro": "E-mail do cliente não informado. Peça ao cliente o e-mail "
+            "cadastrado e só então consulte o pedido."
+        }
+
     erro = {
         "erro": "Não encontrei um pedido com esses dados. "
         "Peça ao cliente para conferir o número do pedido e o e-mail do cadastro."

@@ -1,13 +1,20 @@
 import unicodedata
+
 import pandas as pd
 
 from src.data_loader import load_orders, load_products
 
+# Carrega os dados UMA vez, quando o módulo é importado
 PRODUTOS = load_products()
 PEDIDOS = load_orders()
 
-MAX_RESULTADOS = 8  
+MAX_RESULTADOS = 8  # limita o que volta para o modelo (economiza tokens)
+
+# Ferramentas chamadas na última mensagem (usado no modo --debug e nos exemplos)
 CHAMADAS = []
+
+# Tudo o que o cliente escreveu na conversa (usado para validar o e-mail informado)
+MENSAGENS_CLIENTE = []
 
 
 def _normalizar(texto) -> str:
@@ -38,12 +45,13 @@ def buscar_produtos(
     categoria: str = "",
     preco_maximo: float = 0,
     apenas_disponiveis: bool = False,
+    apenas_promocao: bool = False,
 ) -> dict:
     """Busca instrumentos musicais no catálogo da loja e retorna preço, promoção e disponibilidade.
 
     Use SEMPRE que o cliente perguntar sobre preço, estoque, disponibilidade,
-    características ou quiser opções de instrumentos. Nunca responda sobre
-    preço ou estoque sem chamar esta função.
+    promoções, características ou quiser opções de instrumentos. Nunca responda
+    sobre preço, estoque ou promoção sem chamar esta função.
 
     Args:
         nome: Nome ou parte do nome do produto, como 'Takamine GD20' ou 'Yamaha'.
@@ -54,27 +62,32 @@ def buscar_produtos(
             'Instrumentos de Sopro (Metais)', 'Cordas Orquestrais', 'Ukuleles'.
             Deixe vazio para não filtrar por categoria.
         preco_maximo: Preço máximo em reais que o cliente quer pagar (considera o
-            preço já com promoção). Use 0 para não limitar.
+            preço já com promoção). Use 0 para não limitar. Só limite o preço se o
+            cliente pediu um limite.
         apenas_disponiveis: Use True quando o cliente quer opções para comprar.
             Use False quando ele pergunta por um produto específico, para poder
             informar se está esgotado ou descontinuado.
+        apenas_promocao: Use True quando o cliente perguntar o que está em
+            promoção ou em oferta. Nesse caso NÃO limite o preço, a menos que o
+            cliente tenha pedido um limite.
 
     Returns:
         Dicionário com a lista de produtos encontrados e seus dados.
     """
-
-    (
+    CHAMADAS.append(
         (
             "buscar_produtos",
             {
                 "nome": nome,
                 "categoria": categoria,
-                "preco_maCHAMADAS.appendximo": preco_maximo,
+                "preco_maximo": preco_maximo,
                 "apenas_disponiveis": apenas_disponiveis,
+                "apenas_promocao": apenas_promocao,
             },
         )
     )
-    
+
+    # Uma máscara de True/False por produto; cada filtro vai "desligando" linhas
     mascara = pd.Series(True, index=PRODUTOS.index)
 
     if nome:
@@ -91,6 +104,9 @@ def buscar_produtos(
 
     if apenas_disponiveis:
         mascara &= PRODUTOS["available"]
+
+    if apenas_promocao:
+        mascara &= PRODUTOS["has_promo"]
 
     encontrados = PRODUTOS[mascara]
     encontrados = encontrados.sort_values(
@@ -116,7 +132,7 @@ def buscar_produtos(
             item["promocao"] = p.promo_name
             item["desconto_percentual"] = int(p.discount_percent)
             item["preco_promocional"] = float(p.final_price_brl)
-        
+            # Regra do manual: PIX não acumula com promoção, então não há preco_pix
         else:
             item["preco_pix"] = float(p.pix_price_brl)
         produtos.append(item)
@@ -131,33 +147,40 @@ def buscar_produtos(
 def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
     """Consulta o status de um pedido (situação, itens, rastreio e previsão de entrega).
 
-    Use quando o cliente perguntar sobre o andamento, rastreio ou entrega de um
-    pedido. É OBRIGATÓRIO ter o número do pedido E o e-mail cadastrado do cliente;
-    se faltar algum, peça ao cliente antes de chamar esta função.
+    Use quando o cliente perguntar sobre o andamento, rastreio, entrega ou
+    devolução de um pedido. É OBRIGATÓRIO ter o número do pedido E o e-mail
+    cadastrado do cliente; se faltar algum, peça ao cliente ANTES de chamar
+    esta função.
 
     Args:
         numero_pedido: Número do pedido informado pelo cliente.
-               email_cliente: E-mail cadastrado do cliente, usado para confirmar a identidade.
-            Use SOMENTE o e-mail que o cliente escreveu na conversa. Nunca invente,
+        email_cliente: E-mail cadastrado do cliente, usado para confirmar a identidade.
+            Use SOMENTE um e-mail que o cliente escreveu na conversa. Nunca invente,
             suponha ou deduza um e-mail.
+
     Returns:
         Dicionário com os dados do pedido, ou uma mensagem de erro se os dados não conferirem.
     """
-    
+    # O e-mail só vale se o cliente realmente o escreveu na conversa
+    texto_cliente = _normalizar(" ".join(MENSAGENS_CLIENTE))
+    email_valido = bool(
+        email_cliente
+        and email_cliente.strip()
+        and _normalizar(email_cliente) in texto_cliente
+    )
+
+    # O e-mail em si não é registrado, por privacidade
     CHAMADAS.append(
         (
             "consultar_pedido",
-            {
-                "numero_pedido": numero_pedido,
-                "email_informado": bool(email_cliente and email_cliente.strip()),
-            },
+            {"numero_pedido": numero_pedido, "email_informado": email_valido},
         )
     )
 
-    if not email_cliente or not email_cliente.strip():
+    if not email_valido:
         return {
-            "erro": "E-mail do cliente não informado. Peça ao cliente o e-mail "
-            "cadastrado e só então consulte o pedido."
+            "erro": "O cliente ainda não informou o e-mail cadastrado. "
+            "Peça o e-mail ao cliente e só então consulte o pedido."
         }
 
     erro = {
@@ -170,7 +193,7 @@ def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
         return erro
 
     p = pedido.iloc[0]
-    
+    # Mesma mensagem de erro nos dois casos, para não revelar qual dado estava errado
     if _normalizar(p["email"]) != _normalizar(email_cliente):
         return erro
 

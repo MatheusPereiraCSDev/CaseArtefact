@@ -199,6 +199,11 @@ def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
 
     previsao = _ou_none(p["estimated_delivery"])
 
+  
+    hoje = pd.Timestamp.today().normalize()
+    em_andamento = p["status"] in ("pending", "confirmed", "shipped")
+    previsao_vencida = bool(previsao is not None and em_andamento and previsao < hoje)
+
     return {
         "numero_pedido": int(p["order_id"]),
         "cliente": p["customer_name"],
@@ -209,5 +214,12 @@ def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
         "forma_pagamento": p["payment_pt"],
         "codigo_rastreio": _ou_none(p["tracking_code"]),
         "previsao_entrega": previsao.strftime("%d/%m/%Y") if previsao is not None else None,
+        "previsao_ja_passou_sem_entrega": previsao_vencida,
+        "aviso_sobre_datas": (
+            "O sistema não registra a data real de entrega: 'previsao_entrega' é só uma "
+            "estimativa. Cite-a sempre como previsão, nunca como data confirmada. Se "
+            "'previsao_ja_passou_sem_entrega' for true, avise o cliente do atraso, peça "
+            "desculpas e oriente a falar com a equipe, sem inventar motivo nem nova data."
+        ),
         "observacoes": _ou_none(p["notes"]),
     }

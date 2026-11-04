@@ -222,8 +222,6 @@ Testei o agente com conversas reais a cada etapa, e isso revelou falhas que não
 
 ## Uso de assistentes de código
 
-## Uso de assistentes de código
-
 Usei o **Claude (Anthropic)**, pelo chat, durante todo o projeto. O código foi escrito pelo Claude a partir dos meus pedidos e do que fui descobrindo nos testes. Meu papel foi conduzir o projeto, executar, testar, depurar e tomar as decisões.
 
 **Como foi o fluxo:** construímos em etapas (setup, dados, ferramentas, persona, agente, exemplos e README). Em cada uma, eu pedia o código com explicação linha por linha, rodava no meu computador e voltava com os resultados reais, inclusive os erros.

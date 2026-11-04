@@ -1,6 +1,6 @@
 # Conversa: 03_status_e_devolucao
 
-_Gerada em 03/11/2026 19:34_
+_Gerada em 04/11/2026 00:18_
 
 ---
 
@@ -8,7 +8,7 @@ _Gerada em 03/11/2026 19:34_
 
 **Cliente:** Cadê meu pedido 8?
 
-**Téo:** Para eu verificar o status do seu pedido, preciso que você me informe o e-mail que foi utilizado no cadastro, por favor. 😊
+**Téo:** Para eu verificar o status do seu pedido, preciso que você me informe o e-mail cadastrado na compra, por favor. 😊
 
 **Cliente:** anacarol.ferreira@coldmail.com
 
@@ -16,14 +16,18 @@ _Gerada em 03/11/2026 19:34_
 
 **Téo:** Oi, Ana Carolina! Tudo bem?
 
-Verifiquei aqui e seu pedido nº 8, contendo o ukulele Kala KA-C Concert Mogno, já foi enviado! 🚚
+Verifiquei aqui e o seu pedido nº 8, que contém o ukulele Kala KA-C Concert Mogno, foi enviado. 
 
-O código de rastreio é **BRJL5544332BR** e a previsão de entrega é para o dia 28/02/2026. Qualquer dúvida, estou à disposição!
+Como a previsão de entrega era para o dia 28/02/2026 e o pedido ainda não chegou, peço mil desculpas pelo atraso! 😔
+
+Como sou um assistente virtual, não consigo verificar o motivo exato desse atraso, mas você pode acompanhar o rastreio pelo código **BRJL5544332BR** no site da transportadora. 
+
+Para resolvermos isso da melhor forma, por favor, entre em contato com nossa equipe pelo WhatsApp (67) 3341-4444 ou pelo e-mail contato@emporiodamusica.com.br. Eles vão te ajudar a entender o que houve!
 
 **Cliente:** Posso devolver quando chegar?
 
-**Téo:** Pode sim, Ana! Como é uma compra online, você tem o direito de arrependimento e pode solicitar a devolução em até 7 dias corridos após o recebimento do produto.
+**Téo:** Pode sim, Ana! Como você comprou online, você tem o direito de arrependimento. 
 
-Para isso, o ukulele precisa estar na embalagem original, sem sinais de uso e com todos os acessórios. O frete de devolução é por nossa conta e o reembolso é feito na mesma forma de pagamento original em até 10 dias úteis.
+Você pode solicitar a devolução em até 7 dias corridos após o recebimento do produto, sem precisar justificar o motivo. O ukulele precisa estar na embalagem original, sem sinais de uso e com todos os acessórios e manuais, tá bom?
 
-Se precisar seguir com isso quando o produto chegar, é só me chamar por aqui ou entrar em contato com a nossa equipe pelo (67) 3341-4444. 😊
+Assim que você receber, se decidir seguir com a devolução, é só entrar em contato com nossa equipe pelo WhatsApp (67) 3341-4444 ou pelo e-mail contato@emporiodamusica.com.br para iniciarmos o processo. O frete de devolução fica por nossa conta! 😊

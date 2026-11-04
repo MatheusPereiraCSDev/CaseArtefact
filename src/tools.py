@@ -1,19 +1,15 @@
 import unicodedata
-
 import pandas as pd
 
 from src.data_loader import load_orders, load_products
 
-# Carrega os dados UMA vez, quando o módulo é importado
 PRODUTOS = load_products()
 PEDIDOS = load_orders()
 
-MAX_RESULTADOS = 8  # limita o que volta para o modelo (economiza tokens)
+MAX_RESULTADOS = 8  
 
-# Ferramentas chamadas na última mensagem (usado no modo --debug e nos exemplos)
 CHAMADAS = []
 
-# Tudo o que o cliente escreveu na conversa (usado para validar o e-mail informado)
 MENSAGENS_CLIENTE = []
 
 
@@ -38,6 +34,21 @@ def _disponibilidade(status: str, estoque: int) -> str:
 def _ou_none(valor):
     """Troca valores vazios do pandas (NaN/NaT) por None."""
     return None if pd.isna(valor) else valor
+
+
+def _prazo_arrependimento(status: str, previsao, hoje) -> str:
+    """Estima o direito de arrependimento (7 dias corridos após o recebimento)."""
+    if status == "cancelled":
+        return "não se aplica (pedido cancelado)"
+    if status != "delivered":
+        return "ainda não começou a contar (o pedido não foi entregue)"
+    if previsao is None:
+        return "indeterminado (sem data de referência)"
+
+    dias = (hoje - previsao).days
+    if dias > 7:
+        return f"provavelmente expirado (a previsão de entrega foi há {dias} dias)"
+    return f"provavelmente dentro do prazo (a previsão de entrega foi há {dias} dias)"
 
 
 def buscar_produtos(
@@ -87,7 +98,7 @@ def buscar_produtos(
         )
     )
 
-    # Uma máscara de True/False por produto; cada filtro vai "desligando" linhas
+
     mascara = pd.Series(True, index=PRODUTOS.index)
 
     if nome:
@@ -132,7 +143,7 @@ def buscar_produtos(
             item["promocao"] = p.promo_name
             item["desconto_percentual"] = int(p.discount_percent)
             item["preco_promocional"] = float(p.final_price_brl)
-            # Regra do manual: PIX não acumula com promoção, então não há preco_pix
+           
         else:
             item["preco_pix"] = float(p.pix_price_brl)
         produtos.append(item)
@@ -161,7 +172,7 @@ def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
     Returns:
         Dicionário com os dados do pedido, ou uma mensagem de erro se os dados não conferirem.
     """
-    # O e-mail só vale se o cliente realmente o escreveu na conversa
+    
     texto_cliente = _normalizar(" ".join(MENSAGENS_CLIENTE))
     email_valido = bool(
         email_cliente
@@ -169,7 +180,7 @@ def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
         and _normalizar(email_cliente) in texto_cliente
     )
 
-    # O e-mail em si não é registrado, por privacidade
+
     CHAMADAS.append(
         (
             "consultar_pedido",
@@ -193,14 +204,13 @@ def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
         return erro
 
     p = pedido.iloc[0]
-    # Mesma mensagem de erro nos dois casos, para não revelar qual dado estava errado
+  
     if _normalizar(p["email"]) != _normalizar(email_cliente):
         return erro
 
     previsao = _ou_none(p["estimated_delivery"])
-
-  
     hoje = pd.Timestamp.today().normalize()
+
     em_andamento = p["status"] in ("pending", "confirmed", "shipped")
     previsao_vencida = bool(previsao is not None and em_andamento and previsao < hoje)
 
@@ -215,11 +225,17 @@ def consultar_pedido(numero_pedido: int, email_cliente: str) -> dict:
         "codigo_rastreio": _ou_none(p["tracking_code"]),
         "previsao_entrega": previsao.strftime("%d/%m/%Y") if previsao is not None else None,
         "previsao_ja_passou_sem_entrega": previsao_vencida,
+        "prazo_arrependimento": _prazo_arrependimento(p["status"], previsao, hoje),
         "aviso_sobre_datas": (
             "O sistema não registra a data real de entrega: 'previsao_entrega' é só uma "
             "estimativa. Cite-a sempre como previsão, nunca como data confirmada. Se "
             "'previsao_ja_passou_sem_entrega' for true, avise o cliente do atraso, peça "
-            "desculpas e oriente a falar com a equipe, sem inventar motivo nem nova data."
+            "desculpas e oriente a falar com a equipe, sem inventar motivo nem nova data. "
+            "Em perguntas de devolução por arrependimento, responda usando "
+            "'prazo_arrependimento' e deixe claro que a conclusão vem da previsão de "
+            "entrega; se o cliente tiver recebido em outra data, ele pode informar à "
+            "equipe para confirmar. Dê a conclusão primeiro, sem responder só com uma "
+            "pergunta."
         ),
         "observacoes": _ou_none(p["notes"]),
     }

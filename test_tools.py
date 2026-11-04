@@ -33,3 +33,10 @@ pprint(consultar_pedido(8, email_certo))
 print("\n=== 7) Pedido 8 com o e-mail de OUTRO cliente ===")
 tools.MENSAGENS_CLIENTE.append("pedro.oliveira@jmail.com")
 pprint(consultar_pedido(8, "pedro.oliveira@jmail.com"))
+
+print("\n=== 8) Prazo de arrependimento calculado ===")
+for numero in (1, 8):
+    email = PEDIDOS.loc[PEDIDOS["order_id"] == numero, "email"].iloc[0]
+    tools.MENSAGENS_CLIENTE.append(email)
+    resultado = consultar_pedido(numero, email)
+    print(numero, "|", resultado["situacao"], "|", resultado["previsao_entrega"], "|", resultado["prazo_arrependimento"])
